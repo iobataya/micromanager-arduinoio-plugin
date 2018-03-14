@@ -3,7 +3,12 @@ package org.micromanager.acqbyttl;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
-
+@Deprecated
+/**
+ * This class was moved to org.micromanager.overlayarduino package.
+ * @author jpk10
+ *
+ */
 public class AcqByTtlStatus {
 
 	private ScriptInterface gui_;

@@ -40,7 +40,12 @@ import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
-
+@Deprecated
+/**
+ * This class was moved to org.micromanager.overlayarduino package.
+ * @author jpk10
+ *
+ */
 public class AcqByTTL implements MMPlugin {
 	public static final String menuName = "ACQ by TTL";
 	public static final String tooltipDescription = "Displays a frame to control triggering of acq by external TTL signal";
@@ -48,6 +53,8 @@ public class AcqByTTL implements MMPlugin {
 	// Provides access to the Micro-Manager Java API (for GUI control and high-
 	// level functions).
 	private ScriptInterface gui_;
+	
+	private static MMStudio mmStudio_;
 	// Provides access to the Micro-Manager Core API (for direct hardware
 	// control)
 	private CMMCore core_;
@@ -56,9 +63,9 @@ public class AcqByTTL implements MMPlugin {
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			MMStudio mmStudio = new MMStudio(false);			
+		    mmStudio_ = new MMStudio(false);			
 			AcqByTTL acqbyttl = new AcqByTTL();
-			acqbyttl.setApp(mmStudio);
+			acqbyttl.setApp(mmStudio_);
 			acqbyttl.show();
 
 		} catch (ClassNotFoundException e) {
@@ -108,7 +115,7 @@ public class AcqByTTL implements MMPlugin {
 
 	@Override
 	public void show() {
-		acqform_ = new AcqByTtlMigForm(gui_);
+		acqform_ = new AcqByTtlMigForm(mmStudio_);
 		acqform_.setVisible(true);
 	}
 
