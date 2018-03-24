@@ -1,4 +1,4 @@
-package org.micromanager.acqbyttl;
+package org.micromanager.arduinoio;
 
 import org.micromanager.api.ScriptInterface;
 
@@ -40,13 +40,8 @@ import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
-@Deprecated
-/**
- * This class was moved to org.micromanager.overlayarduino package.
- * @author jpk10
- *
- */
-public class AcqByTTL implements MMPlugin {
+
+public class ArduinoIO implements MMPlugin {
 	public static final String menuName = "ACQ by TTL";
 	public static final String tooltipDescription = "Displays a frame to control triggering of acq by external TTL signal";
 
@@ -59,12 +54,12 @@ public class AcqByTTL implements MMPlugin {
 	// control)
 	private CMMCore core_;
 
-	private AcqByTtlMigForm acqform_;
+	private ArduinoIoMigForm acqform_;
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		    mmStudio_ = new MMStudio(false);			
-			AcqByTTL acqbyttl = new AcqByTTL();
+			ArduinoIO acqbyttl = new ArduinoIO();
 			acqbyttl.setApp(mmStudio_);
 			acqbyttl.show();
 
@@ -115,8 +110,7 @@ public class AcqByTTL implements MMPlugin {
 
 	@Override
 	public void show() {
-		acqform_ = new AcqByTtlMigForm(mmStudio_);
-		acqform_.setVisible(true);
+		acqform_ = new ArduinoIoMigForm(mmStudio_);
 	}
 
 }
