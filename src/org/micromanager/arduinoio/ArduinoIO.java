@@ -48,17 +48,18 @@ public class ArduinoIO implements MMPlugin {
 	// Provides access to the Micro-Manager Java API (for GUI control and high-
 	// level functions).
 	private ScriptInterface gui_;
-	
+
 	private static MMStudio mmStudio_;
 	// Provides access to the Micro-Manager Core API (for direct hardware
 	// control)
 	private CMMCore core_;
 
 	private ArduinoIoMigForm acqform_;
+
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		    mmStudio_ = new MMStudio(false);			
+			mmStudio_ = new MMStudio(false);
 			ArduinoIO acqbyttl = new ArduinoIO();
 			acqbyttl.setApp(mmStudio_);
 			acqbyttl.show();
@@ -75,7 +76,16 @@ public class ArduinoIO implements MMPlugin {
 		} catch (UnsupportedLookAndFeelException e) {
 			ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
 			System.exit(1);
-		}		
+		}
+	}
+
+	public ArduinoPoller getPoller() {
+		try {
+			return ArduinoPoller.getInstance(mmStudio_);
+		} catch (Exception ex) {
+			ReportingUtils.logError(ex);
+		}
+		return null;
 	}
 
 	@Override
