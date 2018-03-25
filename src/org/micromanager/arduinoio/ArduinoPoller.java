@@ -32,6 +32,7 @@ public class ArduinoPoller implements Runnable {
 	private static final String PROP_STATE = "State";
 	private static final String ERR_NOT_LOADED = "Arduino is not loaded.";
 	private static ArduinoPoller instance_;
+	private static Thread t;
 	private int lastDigitalIn = 0;
 	private boolean lastInBit0 = false;
 	private boolean lastInBit1 = false;
@@ -74,6 +75,11 @@ public class ArduinoPoller implements Runnable {
 				shutterAvailable = true;
 			}
 		}
+		if (t == null || !t.isAlive()) {
+			t = new Thread(instance_);
+			t.setName("Arduino IO");
+			t.start();
+		}
 		return instance_;
 	}
 
@@ -84,6 +90,10 @@ public class ArduinoPoller implements Runnable {
 	public void removeListener(ArduinoInputListener l) {
 		listeners_.remove(listeners_.indexOf(l));
 	}
+	
+	public void clearListeners() {
+		listeners_.clear();
+	}
 
 	@Override
 	public void run() {
@@ -92,18 +102,19 @@ public class ArduinoPoller implements Runnable {
 				poll();
 			} catch (Exception ex) {
 				ReportingUtils.logError(ex);
+				deviceAvailable = false;
 			}
 		}
 	}
 
-	private synchronized void poll() throws Exception {
+	private void poll() throws Exception {
 		if (listeners_.size() == 0 || deviceAvailable == false) {
 			return; // nothing to do.
 		}
 		/////////////////////////
 		// Digital Input 0,1
 		// Get digital input from Arduino. Bit 0 and bit 1 are used.
-		if(digitalInAvailable) {
+		if (digitalInAvailable) {
 			String strDigital = null;
 			strDigital = mmc_.getProperty(DEV_ARDUINO, PROP_DIGITAL_IN);
 			int currentDigital = Integer.parseInt(strDigital);
@@ -113,7 +124,7 @@ public class ArduinoPoller implements Runnable {
 				boolean currentBit0 = inputEvent.isHighAt0();
 				boolean currentBit1 = inputEvent.isHighAt1();
 				for (ArduinoInputListener l : listeners_) {
-					if(l!=null) {
+					if (l != null) {
 						l.ValueChanged(inputEvent);
 					}
 				}
@@ -144,18 +155,20 @@ public class ArduinoPoller implements Runnable {
 				lastInBit0 = currentBit0;
 				lastInBit1 = currentBit1;
 			}
-		}		
+		}
 		//////
 		// Output
 		if (digitalOutAvailable && shutterAvailable) {
-			if(!mmc_.deviceBusy("Arduino-Switch")) {
-				if(lastDigitalOutValue!=currentDigitalOutValue) {
+			if (!mmc_.deviceBusy("Arduino-Switch")) {
+				if (lastDigitalOutValue != currentDigitalOutValue) {
 					mmc_.setProperty(DEV_ARDUINO_SWITCH, PROP_STATE, String.valueOf(currentDigitalOutValue));
+					lastDigitalOutValue = currentDigitalOutValue;
 				}
 			}
 		}
 	}
-	public synchronized void setDigitalOut(int digitalVal) {
+
+	public  void setDigitalOut(int digitalVal) {
 		lastDigitalOutValue = currentDigitalOutValue;
 		currentDigitalOutValue = (digitalVal & 0x2F);
 	}
