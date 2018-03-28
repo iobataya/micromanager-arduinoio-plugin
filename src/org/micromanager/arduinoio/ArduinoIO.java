@@ -19,16 +19,9 @@ import mmcorej.CMMCore;
 public class ArduinoIO implements MMPlugin {
 	public static final String menuName = "Arduino I/O";
 	public static final String tooltipDescription = "Displays a frame to control triggering of acq by external TTL signal";
-
-	// Provides access to the Micro-Manager Java API (for GUI control and high-
-	// level functions).
 	private ScriptInterface gui_;
-
 	private static MMStudio mmStudio_;
-	// Provides access to the Micro-Manager Core API (for direct hardware
-	// control)
 	private CMMCore core_;
-
 	private ArduinoIoMigForm acqform_;
 
 	public static void main(String[] args) {
@@ -38,19 +31,8 @@ public class ArduinoIO implements MMPlugin {
 			ArduinoIO arduino = new ArduinoIO();
 			arduino.setApp(mmStudio_);
 			arduino.show();
-
-		} catch (ClassNotFoundException e) {
+		} catch (Exception e) {
 			ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-			System.exit(1);
-		} catch (IllegalAccessException e) {
-			ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-			System.exit(1);
-		} catch (InstantiationException e) {
-			ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-			System.exit(1);
-		} catch (UnsupportedLookAndFeelException e) {
-			ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-			System.exit(1);
 		}
 	}
 
@@ -95,7 +77,7 @@ public class ArduinoIO implements MMPlugin {
 
 	@Override
 	public void show() {
-		acqform_ = new ArduinoIoMigForm(mmStudio_);
+		acqform_ = ArduinoIoMigForm.getInstance(mmStudio_);
 	}
 
 }

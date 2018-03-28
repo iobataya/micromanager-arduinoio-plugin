@@ -1,14 +1,8 @@
 package org.micromanager.arduinoio;
 
 import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
-
-import javax.swing.JOptionPane;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMDialog;
-import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 import mmcorej.CMMCore;
@@ -48,7 +42,7 @@ public class ArduinoPoller implements Runnable {
 	private ArduinoPoller() {
 	}
 
-	public static ArduinoPoller getInstance(ScriptInterface gui) throws Exception {
+	static ArduinoPoller getInstance(ScriptInterface gui) throws Exception {
 		if (instance_ == null) {
 			instance_ = new ArduinoPoller();
 		}
@@ -62,7 +56,6 @@ public class ArduinoPoller implements Runnable {
 		}
 		if (!deviceAvailable) {
 			ReportingUtils.logError(ERR_NOT_LOADED);
-			JOptionPane.showMessageDialog(null, ERR_NOT_LOADED, "ERROR", JOptionPane.PLAIN_MESSAGE);
 			return instance_;
 		}
 		StrVector peripherals = mmc_.getLoadedPeripheralDevices(DEV_HUB);
@@ -75,14 +68,26 @@ public class ArduinoPoller implements Runnable {
 				shutterAvailable = true;
 			}
 		}
+		instance_.startThread();
+		return instance_;
+	}
+
+	public void startThread() {
 		if (t == null || !t.isAlive()) {
 			t = new Thread(instance_);
 			t.setName("Arduino IO");
 			t.start();
 		}
-		return instance_;
 	}
 
+	public boolean isRunning() {
+		return (t != null && t.isAlive() && !reqStop_);
+	}
+
+	public void requestStop() {
+		reqStop_ = true;
+	}
+	
 	public void addListener(ArduinoInputListener l) {
 		listeners_.add(l);
 	}
@@ -90,7 +95,7 @@ public class ArduinoPoller implements Runnable {
 	public void removeListener(ArduinoInputListener l) {
 		listeners_.remove(listeners_.indexOf(l));
 	}
-	
+
 	public void clearListeners() {
 		listeners_.clear();
 	}
@@ -124,9 +129,7 @@ public class ArduinoPoller implements Runnable {
 				boolean currentBit0 = inputEvent.isHighAt0();
 				boolean currentBit1 = inputEvent.isHighAt1();
 				for (ArduinoInputListener l : listeners_) {
-					if (l != null) {
-						l.ValueChanged(inputEvent);
-					}
+					l.ValueChanged(inputEvent);
 				}
 				// tell listeners rise/fall, if any
 				if (lastInBit0 ^ currentBit0) {
@@ -156,8 +159,8 @@ public class ArduinoPoller implements Runnable {
 				lastInBit1 = currentBit1;
 			}
 		}
-		//////
-		// Output
+		/////////////////////////////
+		// Output 8,13
 		if (digitalOutAvailable && shutterAvailable) {
 			if (!mmc_.deviceBusy("Arduino-Switch")) {
 				if (lastDigitalOutValue != currentDigitalOutValue) {
@@ -168,17 +171,12 @@ public class ArduinoPoller implements Runnable {
 		}
 	}
 
-	public  void setDigitalOut(int digitalVal) {
+	public int getDigitalInput() {
+		return lastDigitalIn;
+	}
+
+	public void setDigitalOut(int digitalVal) {
 		lastDigitalOutValue = currentDigitalOutValue;
 		currentDigitalOutValue = (digitalVal & 0x2F);
 	}
-
-	public void requestStop() {
-		reqStop_ = true;
-	}
-
-	public void requestContinue() {
-		reqStop_ = false;
-	}
-
 }

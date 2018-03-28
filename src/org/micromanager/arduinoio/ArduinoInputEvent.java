@@ -1,5 +1,10 @@
 package org.micromanager.arduinoio;
 
+/**
+ * Event class for ArduinoInput value
+ * @author iobataya
+ *
+ */
 public class ArduinoInputEvent {
 	private final int digitalValue_;
 

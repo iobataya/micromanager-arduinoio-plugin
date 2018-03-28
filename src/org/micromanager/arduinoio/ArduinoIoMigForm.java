@@ -5,14 +5,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.ReportingUtils;
@@ -25,6 +26,7 @@ public class ArduinoIoMigForm extends MMDialog implements ArduinoInputListener {
 	@SuppressWarnings("unused")
 	private final mmcorej.CMMCore mmc_;
 	private ArduinoPoller poller_ = null;
+	//private final JButton btnStartStop_;
 	private final JLabel lblTitleStatus_;
 	private final JLabel lblStatus_;
 	private final JRadioButton radioInput0_;
@@ -32,10 +34,19 @@ public class ArduinoIoMigForm extends MMDialog implements ArduinoInputListener {
 	private final JLabel lblMessage_;
 	private final JCheckBox chkOutput8_;
 	private final JCheckBox chkOutput13_;
-
+	private ArrayList<ArduinoInputListener> listeners_ = new ArrayList<ArduinoInputListener>();
+	private static ArduinoIoMigForm instance_;
 	private final Font arialSmallFont_;
+	private static int currentDigitalInput_ = 0;
 
-	public ArduinoIoMigForm(MMStudio gui) {
+	public static ArduinoIoMigForm getInstance(ScriptInterface gui) {
+		if (instance_ == null) {
+			instance_ = new ArduinoIoMigForm(gui);
+		}
+		return instance_;
+	}
+
+	private ArduinoIoMigForm(ScriptInterface gui) {
 		gui_ = gui;
 		gui_.addMMBackgroundListener(this);
 		mmc_ = gui.getMMCore();
@@ -50,7 +61,20 @@ public class ArduinoIoMigForm extends MMDialog implements ArduinoInputListener {
 		arialSmallFont_ = new Font("Arial", Font.PLAIN, 12);
 		this.setLayout(new MigLayout("flowx, fill, insets 2"));
 		this.setTitle(ArduinoIO.menuName);
-		loadAndRestorePosition(100, 100, 250, 150);
+
+		// Start/Stop polling
+//		btnStartStop_ = new JButton("Start/Stop");
+//		btnStartStop_.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent evt) {
+//				if (poller_.isRunning()) {
+//					poller_.requestStop();
+//				}else {
+//					poller_.startThread();
+//				}
+//			}
+//		});
+//		add(btnStartStop_,"wrap");
 
 		// Status title
 		lblTitleStatus_ = new JLabel("Status:");
@@ -101,6 +125,7 @@ public class ArduinoIoMigForm extends MMDialog implements ArduinoInputListener {
 			}
 		} catch (Exception ex) {
 			ReportingUtils.logError(ex);
+			lblStatus_.setText("Could not get Arduino poller.");
 		}
 	}
 
@@ -128,32 +153,50 @@ public class ArduinoIoMigForm extends MMDialog implements ArduinoInputListener {
 		}
 	}
 
-	private int currentDigitalIn_ = 0;
+	public int getCurrentDigitalInput() {
+		return currentDigitalInput_;
+	}
 
 	@Override
 	public void ValueChanged(ArduinoInputEvent e) {
+		for (ArduinoInputListener l : listeners_) {
+			l.ValueChanged(e);
+		}
 		radioInput0_.setSelected(e.isHighAt0());
 		radioInput1_.setSelected(e.isHighAt1());
+		currentDigitalInput_ = e.getDigitalValue();
 	}
 
 	@Override
 	public void IsRisingAt0() {
-		this.setStatus(String.format("Signal Input0 rising to HIGH (%d)", currentDigitalIn_));
+		for (ArduinoInputListener l : listeners_) {
+			l.IsRisingAt0();
+		}
+		this.setStatus(String.format("Signal Input0 rising to HIGH (%d)", currentDigitalInput_));
 	}
 
 	@Override
 	public void IsFallingAt0() {
-		this.setStatus(String.format("Signal Input0 falling to LOW (%d)", currentDigitalIn_));
+		for (ArduinoInputListener l : listeners_) {
+			l.IsFallingAt0();
+		}
+		this.setStatus(String.format("Signal Input0 falling to LOW (%d)", currentDigitalInput_));
 	}
 
 	@Override
 	public void IsRisingAt1() {
-		this.setStatus(String.format("Signal Input1 rising to HIGH (%d)", currentDigitalIn_));
+		for (ArduinoInputListener l : listeners_) {
+			l.IsRisingAt1();
+		}
+		this.setStatus(String.format("Signal Input1 rising to HIGH (%d)", currentDigitalInput_));
 	}
 
 	@Override
 	public void IsFallingAt1() {
-		this.setStatus(String.format("Signal Input1 falling to LOW", currentDigitalIn_));
+		for (ArduinoInputListener l : listeners_) {
+			l.IsFallingAt1();
+		}
+		this.setStatus(String.format("Signal Input1 falling to LOW", currentDigitalInput_));
 	}
 
 	@Override
@@ -162,4 +205,17 @@ public class ArduinoIoMigForm extends MMDialog implements ArduinoInputListener {
 		poller_.clearListeners();
 		poller_.requestStop();
 	}
+
+	public void addListener(ArduinoInputListener l) {
+		listeners_.add(l);
+	}
+
+	public void removeListener(ArduinoInputListener l) {
+		listeners_.remove(listeners_.indexOf(l));
+	}
+
+	public void clearListeners() {
+		listeners_.clear();
+	}
+
 }
